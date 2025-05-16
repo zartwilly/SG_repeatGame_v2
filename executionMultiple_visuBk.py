@@ -33,6 +33,8 @@ if __name__ == '__main__':
     
     # scenarioFile = "./data_scenario_JeuDominique/dataFromQuentinAutomate150Periods.json"
     
+    scenarioFile = "./data_scenario_JeuDominique/automateTest.json"
+    
     
     bool_runAlgo = True # False, True
     
@@ -46,18 +48,21 @@ if __name__ == '__main__':
         runapp.run_algos_count_prodCartesien(scenario=scenario, logfiletxt=logfiletxt)
     print(f"Running time ALGOS = {time.time() - ti}")
     
-    
+    print(f"scenario cle = {len(scenario)}")
     
     # ------------------------          VISU V2         -----------------------
     # scenario_dir = f"{scenario['scenarioName']}_N{scenario['instance']['N_actors']}T{scenario['simul']['nbPeriod']}K{scenario['algo']['LRI_REPART']['maxstep']}"
     # #scenario_dir = os.path.join(scenario["scenarioPath"], scenario_dir)
     # print(f"{scenario_dir}")
-    scenario_dir = f"{scenario['scenarioName']}_N{scenario['instance']['N_actors']}T{scenario['simul']['nbPeriod']}K{scenario['algo']['LRI_REPART']['maxstep']}"
+    
+    scenario_dir = f"{scenario['scenarioName']}"
     folder_2_search = os.path.join(scenario["scenarioPath"], scenario_dir, "datas", "dataResult")
     folder_2_search_LRI = os.path.join(scenario["scenarioPath"], scenario_dir, "datas", "LRI_REPART")
     folder_2_save = os.path.join(scenario["scenarioPath"], scenario_dir, "datas", "dataViz")
     filename_csv = "dataframes.csv"
-    print(f"{folder_2_search}")
+    print(f"folder_2_search={folder_2_search},\n folder_2_save={folder_2_save},\n filename_csv={filename_csv}")
+    print(f"scenarioPath = {scenario['scenarioPath']}")
+    print(f"scenario_dir = {scenario_dir}")
     
     df = vizBk_v2.find_csvfile(folder_2_search=folder_2_search, folder_2_save=folder_2_save, filename_csv=filename_csv)
     
