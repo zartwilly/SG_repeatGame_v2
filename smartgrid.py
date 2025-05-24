@@ -26,6 +26,8 @@ class Smartgrid :
     ValEgoc = None # sum of all valOne 
     ValNoSG = None
     ValSG = None
+    ImpVSG = None
+    VSG = None
     ValNoSGCost = None
     Reduct = None
     strategy_profile = None 
@@ -103,6 +105,8 @@ class Smartgrid :
         self.ValEgoc = np.zeros(nbperiod)
         self.ValNoSG = np.zeros(nbperiod)
         self.ValSG = np.zeros(nbperiod)
+        self.ImpVSG = np.zeros(nbperiod)
+        self.VSG = np.zeros(nbperiod)
         self.ValNoSGCost = np.zeros(nbperiod)
         self.Reduct = np.zeros(nbperiod)
         dt = np.dtype([('agent', int), ('strategy', ag.Mode)])
@@ -206,9 +210,23 @@ class Smartgrid :
         float.
 
         """
+        
+        # compute ValSG at one period
         outinsg = aux.phiepominus( x=aux.apv(self.outsg[period] - self.insg[period]), coef=self.coef_phiepominus)
         inoutsg = aux.phiepoplus( x=aux.apv(self.insg[period] - self.outsg[period]), coef=self.coef_phiepoplus)
         self.ValSG[period] = outinsg - inoutsg
+        
+        # compute ImpVSG for all prosumers at one period
+        for i in range(self.prosumers.size):
+            self.prosumers[i].ImpVSG[period] \
+                = aux.phiepominus(x=aux.apv( (self.outsg[period] - self.prosumers[i].consit[period]) - (self.insg[period] - self.prosumers[i].prodit[period]) ), coef=self.coef_phiepominus) \
+                     - aux.phiepoplus(x=aux.apv( (self.insg[period] - self.prosumers[i].prodit[period]) - (self.outsg[period] - self.prosumers[i].consit[period]) ), coef=self.coef_phiepoplus)
+            
+        # compute VSG for all prosumers at one period
+        for i in range(self.prosumers.size):
+            self.prosumers[i].VSG[period] \
+                = self.prosumers[i].ImpVSG[period] - self.ValSG[period]
+            
     
     def computeValNoSGCost(self, period:int) -> float:
         """
@@ -899,7 +917,7 @@ class Smartgrid :
         """
         for i in range(self.prosumers.size):
             self.prosumers[i].Lcost[period] \
-                = aux.apv(self.prosumers[i].price[period] - self.prosumers[i].valStock[period])
+                = aux.apv(self.prosumers[i].VSG[period] - self.prosumers[i].valStock[period])
                 
             if self.prosumers[i].LCostmin["Lcost"] == None \
                 or self.prosumers[i].LCostmin["Lcost"] > self.prosumers[i].Lcost[period] :

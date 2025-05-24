@@ -72,6 +72,8 @@ class Prosumer:
     price = None # price by by each prosumer during all periods
     valOne = None # value 
     valNoSG = None # 
+    ImpVSG = None #
+    VSG = None #
     valStock = None # 
     Repart = None # a repartition function based on shapley value
     cost = None # cost of each actor
@@ -186,6 +188,8 @@ class Prosumer:
         self.price = np.zeros(nbperiod)
         self.valOne = np.zeros(nbperiod)
         self.valNoSG = np.zeros(nbperiod)
+        self.ImpVSG = np.zeros(nbperiod)
+        self.VSG = np.zeros(nbperiod)
         self.valStock = np.zeros(nbperiod)
         self.Repart = np.zeros(nbperiod)
         self.cost = np.zeros(nbperiod)
