@@ -15,7 +15,7 @@ import itertools as it
 
 import multiprocessing as mp
 
-import visuDataBOKEH_v2 as vizBK_v2
+import visuDataBOKEH_v2 as vizBk_v2
 
 if __name__ == '__main__':
 
@@ -29,6 +29,8 @@ if __name__ == '__main__':
     scenarioFile = "./data_scenario_JeuDominique/dataFromQuentinAutomate_test_MP.json"
     
     scenarioFile = "./data_scenario_JeuDominique/dataFromQuentinAutomateMorePeriods.json"
+    
+    scenarioFile = "./data_scenario_JeuDominique/automateTest.json"
     
     start = time.time()
     scenario = None
@@ -72,19 +74,40 @@ if __name__ == '__main__':
     
     
     ### visualization
+    # scenario_dir = f"{scenario['scenarioName']}_N{scenario['instance']['N_actors']}T{scenario['simul']['nbPeriod']}K{scenario['algo']['LRI_REPART']['maxstep']}"
+    # folder_2_search = os.path.join(scenario["scenarioPath"], scenario_dir, "datas", "dataResult")
+    # folder_2_search_LRI = os.path.join(scenario["scenarioPath"], scenario_dir, "datas", "LRI_REPART")
+    # folder_2_save = os.path.join(scenario["scenarioPath"], scenario_dir, "datas", "dataViz")
+    # filename_csv = "dataframes.csv"
+    # print(f"{folder_2_search}")
+    
+    # df = vizBK_v2.find_csvfile(folder_2_search=folder_2_search, folder_2_save=folder_2_save, filename_csv=filename_csv)
+    
+    # scenarioCorePathDataViz = os.path.join(scenario["scenarioPath"], scenario_dir, "datas", "dataViz")
+    
+    # vizBK_v2.plot_all_figures_withMeanLRI(df=df, 
+    #                               scenarioCorePathDataViz=scenarioCorePathDataViz, 
+    #                               folder_2_search_LRI=folder_2_search_LRI)
+    
+    
+    scenario_dir = f"{scenario['scenarioName']}"
     scenario_dir = f"{scenario['scenarioName']}_N{scenario['instance']['N_actors']}T{scenario['simul']['nbPeriod']}K{scenario['algo']['LRI_REPART']['maxstep']}"
     folder_2_search = os.path.join(scenario["scenarioPath"], scenario_dir, "datas", "dataResult")
     folder_2_search_LRI = os.path.join(scenario["scenarioPath"], scenario_dir, "datas", "LRI_REPART")
     folder_2_save = os.path.join(scenario["scenarioPath"], scenario_dir, "datas", "dataViz")
     filename_csv = "dataframes.csv"
-    print(f"{folder_2_search}")
+    print(f"folder_2_search={folder_2_search},\n folder_2_save={folder_2_save},\n filename_csv={filename_csv}")
+    print(f"scenarioPath = {scenario['scenarioPath']}")
+    print(f"scenario_dir = {scenario_dir}")
     
-    df = vizBK_v2.find_csvfile(folder_2_search=folder_2_search, folder_2_save=folder_2_save, filename_csv=filename_csv)
+    df = vizBk_v2.find_csvfile(folder_2_search=folder_2_search, folder_2_save=folder_2_save, filename_csv=filename_csv)
     
     scenarioCorePathDataViz = os.path.join(scenario["scenarioPath"], scenario_dir, "datas", "dataViz")
     
-    vizBK_v2.plot_all_figures_withMeanLRI(df=df, 
-                                  scenarioCorePathDataViz=scenarioCorePathDataViz, 
-                                  folder_2_search_LRI=folder_2_search_LRI)
+    vizBk_v2.plot_all_figures_withMeanLRI(df=df, 
+                                 scenarioCorePathDataViz=scenarioCorePathDataViz, 
+                                 folder_2_search_LRI=folder_2_search_LRI)
+    
+    
 
     print(f"Running time = {time.time() - start} cpt={cpt}")
