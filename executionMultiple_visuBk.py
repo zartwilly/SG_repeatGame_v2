@@ -29,11 +29,11 @@ if __name__ == '__main__':
     scenarioFile = "./data_scenario_JeuDominique/dataFromQuentinAutomate100Periods.json"
     scenarioFile = "./data_scenario_JeuDominique/dataFromQuentinAutomate50Periods.json"
     scenarioFile = "./data_scenario_JeuDominique/dataFromQuentinAutomate50PeriodsMultipleParams.json"
-    scenarioFile = "./data_scenario_JeuDominique/dataFromQuentinAutomate100PeriodsMultipleParams.json"
+    # scenarioFile = "./data_scenario_JeuDominique/dataFromQuentinAutomate100PeriodsMultipleParams.json"
     
     # scenarioFile = "./data_scenario_JeuDominique/dataFromQuentinAutomate150Periods.json"
     
-    scenarioFile = "./data_scenario_JeuDominique/automateTest.json"
+    # scenarioFile = "./data_scenario_JeuDominique/automateTest.json"
     
     
     bool_runAlgo = True # False, True
@@ -46,6 +46,9 @@ if __name__ == '__main__':
     start = time.time()
     if bool_runAlgo:
         runapp.run_algos_count_prodCartesien(scenario=scenario, logfiletxt=logfiletxt)
+    else:
+        scenarioName = f"{scenario['scenarioName']}_N{scenario['instance']['N_actors']}T{scenario['simul']['nbPeriod']}K{scenario['algo']['LRI_REPART']['maxstep']}"
+        scenario["scenarioName"] = scenarioName
     print(f"Running time ALGOS = {time.time() - ti}")
     
     print(f"scenario cle = {len(scenario)}")
@@ -69,6 +72,7 @@ if __name__ == '__main__':
     scenarioCorePathDataViz = os.path.join(scenario["scenarioPath"], scenario_dir, "datas", "dataViz")
     
     vizBk_v2.plot_all_figures_withMeanLRI(df=df, 
+                                 period_min=scenario["simul"]["period_min"],
                                  scenarioCorePathDataViz=scenarioCorePathDataViz, 
                                  folder_2_search_LRI=folder_2_search_LRI)
 
