@@ -78,6 +78,7 @@ class Prosumer:
     Repart = None # a repartition function based on shapley value
     cost = None # cost of each actor
     Lcost = None # a learning cost
+    LearningIndicator = None  # a learning indicator 
     Lcostmin = None # a min value of Lcost over the various learning steps
     Lcostmax = None # a max value of Lcost over the various learning steps
     benefit = None # reward for each prosumer at each period
@@ -194,6 +195,7 @@ class Prosumer:
         self.Repart = np.zeros(nbperiod)
         self.cost = np.zeros(nbperiod)
         self.Lcost = np.zeros(nbperiod)
+        self.LearningIndicator = np.zeros(nbperiod)
         self.Lcostmin = np.ndarray(shape=nbperiod, dtype='object')
         self.Lcostmax = np.zeros(shape=nbperiod, dtype='object')
         self.LCostmax = dict({"price":None, "valStock":None, "mode":None, "state":None, "Lcost":None})

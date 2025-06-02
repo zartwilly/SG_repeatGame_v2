@@ -16,7 +16,7 @@ import random as rdm
 from pathlib import Path
 
 
-COEF_PERIOD_GEN = 1.5 # number of max periods to generate  max_period = COEF_PERIOD_GEN * T
+COEF_PERIOD_GEN = 2.5 # number of max periods to generate  max_period = COEF_PERIOD_GEN * T
 
 class Instancegenaratorversion2:
     '''

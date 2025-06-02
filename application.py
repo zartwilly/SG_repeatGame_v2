@@ -389,7 +389,8 @@ class App:
     
     
     def run_LRI_4_onePeriodT_oneStepK(self, period:int, epsilon:float, 
-                                      lambda_poisson: float, boolInitMinMax:bool):
+                                      lambda_poisson: float, boolInitMinMax:bool,
+                                      strategieStateDeficit:bool):
         """
         
 
@@ -415,7 +416,7 @@ class App:
 
         """
         # Update prosumers' modes following LRI mode selection
-        self.SG.updateModeLRI(period, self.threshold)
+        self.SG.updateModeLRI(period, self.threshold, strategieStateDeficit=strategieStateDeficit)
         
         # Update prodit, consit and period + 1 storage values
         self.SG.updateSmartgrid(period)
@@ -527,7 +528,8 @@ class App:
         # calculate ValStock
         self.SG.computeValStock(period)
         
-        # calculate
+        # calculate learning indicator I(ai,s)
+        self.SG.computeLearningIndicator(period)
         
         
         ## ------ end ------
@@ -581,7 +583,8 @@ class App:
                 self.run_LRI_4_onePeriodT_oneStepK(period=t, 
                                                    epsilon=scenario["execution_parameters"]["epsilon"], 
                                                    lambda_poisson=scenario["execution_parameters"]["lambda_poisson"],
-                                                   boolInitMinMax=True)
+                                                   boolInitMinMax=True, 
+                                                   strategieStateDeficit=scenario["simul"]["strategieStateDeficit"])
         
             # --- START Game with learning steps
             dicoLRI_onePeriod_KStep = dict()
@@ -593,7 +596,8 @@ class App:
                 self.run_LRI_4_onePeriodT_oneStepK(period=t, 
                                                    epsilon=scenario["execution_parameters"]["epsilon"], 
                                                    lambda_poisson=scenario["execution_parameters"]["lambda_poisson"],
-                                                   boolInitMinMax=False)
+                                                   boolInitMinMax=False, 
+                                                   strategieStateDeficit=scenario["simul"]["strategieStateDeficit"])
                 
                 self.save_LRI_2_json_onePeriod_oneStep(period=t, step=k, 
                                                         algoName=algoName, 

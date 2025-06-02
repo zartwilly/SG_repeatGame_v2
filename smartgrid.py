@@ -899,6 +899,52 @@ class Smartgrid :
     #             = aux.phiepominus(min( aux.apv(Si_tplus1 - Si), QTstock_i )) \
     #                 - aux.phiepominus(min( aux.apv(Si - Si_tplus1), QTstock_i ))
     
+    
+    def computeLearningIndicator(self, period:int):
+        """
+        compute the learning Indicator named I in the latex document
+
+        Parameters
+        ----------
+        period : int
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        """
+        
+        for i in range(self.prosumers.size):
+            prod_it = self.prosumers[i].prodit[period]
+            cons_it = self.prosumers[i].consit[period]
+            C_it = self.prosumers[i].consumption[period]
+            P_it = self.prosumers[i].production[period]
+            
+            if self.ValSG[period] >= 0 and prod_it > 0:
+                self.prosumers[i].LearningIndicator[period] \
+                    = - aux.phiepominus(x=prod_it, coef=self.coef_phiepominus)
+                
+            elif self.ValSG[period] >= 0 and prod_it < 0:
+                self.prosumers[i].LearningIndicator[period] \
+                    = - aux.phiepoplus(x=prod_it, coef=self.coef_phiepoplus)
+                
+            elif self.ValSG[period] >= 0 and prod_it == 0 and cons_it == 0:
+                self.prosumers[i].LearningIndicator[period] = 0
+                
+            elif self.ValSG[period] < 0 and cons_it > 0:
+                self.prosumers[i].LearningIndicator[period] \
+                    = (cons_it / self.outsg[period]) * self.ValSG[period]
+                
+            elif self.ValSG[period] < 0 and cons_it < 0:
+                self.prosumers[i].LearningIndicator[period] \
+                    = - aux.phiepominus(x=C_it-P_it-cons_it, coef=self.coef_phiepominus)
+                
+            elif self.ValSG[period] < 0 and cons_it == 0 and prod_it == 0:
+                self.prosumers[i].LearningIndicator[period] = 0
+                
+        
+        
             
     def computeLCost_LCostMinMax(self, period:int):
         """
@@ -917,7 +963,7 @@ class Smartgrid :
         """
         for i in range(self.prosumers.size):
             self.prosumers[i].Lcost[period] \
-                = aux.apv(self.prosumers[i].VSG[period] - self.prosumers[i].valStock[period])
+                = aux.apv(self.prosumers[i].LearningIndicator[period] - self.prosumers[i].valStock[period])
                 
             if self.prosumers[i].LCostmin["Lcost"] == None \
                 or self.prosumers[i].LCostmin["Lcost"] > self.prosumers[i].Lcost[period] :
@@ -1155,7 +1201,7 @@ class Smartgrid :
                     self.prosumers[i].prmode[period][1] = min(1,self.prosumers[i].prmode[period][1] + slowdown * self.prosumers[i].utility[period] * (1 - self.prosumers[i].prmode[period][1]))
                     self.prosumers[i].prmode[period][0] = 1 - self.prosumers[i].prmode[period][1]
     
-    def updateModeLRI(self, period:int, threshold:float): 
+    def updateModeLRI(self, period:int, threshold:float, strategieStateDeficit:bool=False): 
         """
         Update mode using rules from LRI
         
@@ -1196,6 +1242,12 @@ class Smartgrid :
                     self.prosumers[i].mode[period] = ag.Mode.CONSPLUS
                 else :
                     self.prosumers[i].mode[period] = ag.Mode.CONSMINUS
+                    
+                    
+                if eval(strategieStateDeficit) == True:
+                    self.prosumers[i].mode[period] = ag.Mode.CONSPLUS
+                    # print(f"******  Prosumer_{i}: state={self.prosumers[i].state[period]}: mode=CONS++ ****** ")
+                
                     
     
     def updateModeSyA(self, period:int): 

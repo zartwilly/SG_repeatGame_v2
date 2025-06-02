@@ -35,10 +35,12 @@ COLORS = {"SyA":"gray", "Bestie":"red", "CSA":"yellow", "SSA":"green", "LRI_REPA
 
 TOOLS="""hover,crosshair,pan,wheel_zoom,zoom_in,zoom_out,box_zoom,undo,redo,
             reset,tap,save,box_select,poly_select,lasso_select,examine,help"""
+TOOLS_MODES = "hover, tap, reset, save, pan, wheel_zoom,zoom_in,zoom_out,box_zoom,undo,redo, box_select"
             
 TOOLTIPS_Val_SG_NoSG = [ ("value", "$y{(0,0)}"), ]
 TOOLTIPS_LCOST = [("value", "$y{(0,0)}")]
 TOOLTIPS_MODES = [("value", "$y{.5,3}")]
+TOOLTIPS_STATE_MODES = "$name @period: @$name"
 TOOLTIPS_XY_ai = [("value", "$y{(0.1,1)}")]
 ###############################################################################
 #                   CONSTANTES: FIN
@@ -375,6 +377,7 @@ def plot_barStack_valSG_over_statePeriod(df_valSG_State_T):
         
     learning_rates = df_valSG_State_T.learning_rate.unique()
     algoNames = df_valSG_State_T.algoName.unique().tolist()
+    print(f"AlgoNames = {algoNames}, df_valSG_State_T={df_valSG_State_T.shape}")
     algoNames.remove('Bestie')
     for (learning_rate, algoName) in it.product(learning_rates, algoNames):
         
@@ -739,6 +742,170 @@ def plot_barModesBis(df_rho_mu_epsilon_lambda:pd.DataFrame):
         plotBarModes.append(plotBarMode)
         
     return plotBarModes
+
+def plot_barModesBis_refactoring(df_rho_mu_epsilon_lambda:pd.DataFrame):
+    """
+    refactoring 
+    plot distribution of value modes for all algorihtms for one value of rho, mu, epsilon
+
+    Parameters
+    ----------
+    df_rho_mu_epsilon_lambda : pd.DataFrame
+        DESCRIPTION.
+
+    Returns
+    -------
+    None.
+
+    """
+    
+    plotBarModes = []
+    learning_rates = df_rho_mu_epsilon_lambda.learning_rate.unique()
+    for learning_rate in learning_rates:
+        df_lr_algos = df_rho_mu_epsilon_lambda[df_rho_mu_epsilon_lambda.learning_rate == learning_rate]
+        
+        df_lr_algos['state'] = df_lr_algos['state'].str.replace('State.', '', regex=False)
+        df_lr_algos['mode'] = df_lr_algos['mode'].str.replace('Mode.', '', regex=False)
+        
+        
+        counts = df_lr_algos.groupby(['algoName','period'])['mode'].value_counts().unstack(fill_value=0)
+        # Calculer la somme par ligne
+        row_sums = counts.sum(axis=1)
+        
+        # Diviser chaque valeur par la somme de sa ligne, puis multiplier par 100 pour obtenir un pourcentage
+        counts_percent = counts.div(row_sums, axis=0) 
+        modes = counts_percent.columns.tolist()
+        
+        # Optionnel : arrondir les valeurs à 2 décimales
+        counts_percent = counts_percent.round(2)
+        
+        counts_percent = counts_percent.reset_index()
+        
+        
+        counts_percent["period"] = counts_percent["period"].astype(str)
+        factors = list(zip(counts_percent["algoName"], counts_percent["period"]))
+        
+        source = ColumnDataSource(data=dict(
+                    x=factors,
+                    period=counts_percent["period"].tolist(),
+                    CONSMINUS=counts_percent["CONSMINUS"].tolist(),
+                    CONSPLUS=counts_percent["CONSPLUS"].tolist(),
+                    DIS=counts_percent["DIS"].tolist(),
+                    PROD=counts_percent["PROD"].tolist()
+                    ))
+        
+        plotBarMode = figure(x_range=FactorRange(*factors), height=450,
+                             toolbar_location=None, tools="", 
+                             tooltips=TOOLTIPS_STATE_MODES)
+    
+        
+        plotBarMode.vbar_stack(modes, x='x', width=0.9, alpha=0.5, 
+                               color=["blue", "red", "yellow", "cyan"], 
+                               source=source,
+                               legend_label=modes)
+        
+        plotBarMode.y_range.start = 0
+        plotBarMode.y_range.end = 1
+        plotBarMode.x_range.range_padding = 0.1
+        plotBarMode.xaxis.major_label_orientation = 1
+        plotBarMode.xgrid.grid_line_color = None
+        plotBarMode.legend.location = "top_center"
+        plotBarMode.legend.orientation = "horizontal"
+        plotBarMode.title = f" Distribution des strategies Modes from learning rate {learning_rate}"
+        
+        plotBarMode.add_layout(Legend(), 'right')
+    
+        plotBarModes.append(plotBarMode)
+        
+    return plotBarModes
+        
+        
+def plot_barStateModesBis_refactoring(df_rho_mu_epsilon_lambda:pd.DataFrame):
+    """
+    refactoring 
+    plot distribution of value modes by state for all algorihtms for one value of rho, mu, epsilon
+
+    Parameters
+    ----------
+    df_rho_mu_epsilon_lambda : pd.DataFrame
+        DESCRIPTION.
+
+    Returns
+    -------
+    None.
+
+    """
+    
+    plotBarStateModes = []
+    learning_rates = df_rho_mu_epsilon_lambda.learning_rate.unique()
+    for learning_rate in learning_rates:
+        df_lr_algos = df_rho_mu_epsilon_lambda[df_rho_mu_epsilon_lambda.learning_rate == learning_rate]
+        
+        df_lr_algos['state'] = df_lr_algos['state'].str.replace('State.', '', regex=False)
+        df_lr_algos['mode'] = df_lr_algos['mode'].str.replace('Mode.', '', regex=False)
+        
+        
+        counts = df_lr_algos.groupby(['algoName','period', 'state'])['mode'].value_counts().unstack(fill_value=0)
+        # Calculer la somme par ligne
+        row_sums = counts.sum(axis=1)
+        
+        # Diviser chaque valeur par la somme de sa ligne, puis multiplier par 100 pour obtenir un pourcentage
+        counts_percent = counts.div(row_sums, axis=0) 
+        modes = counts_percent.columns.tolist()
+        
+        # Optionnel : arrondir les valeurs à 2 décimales
+        counts_percent = counts_percent.round(2)
+        
+        
+        modes = counts_percent.columns.tolist()
+        counts_percent = counts_percent.reset_index()
+        
+        plotAlgoBarModes = []
+        for algoName in counts_percent.algoName.unique():
+            
+            counts_percent_al = counts_percent[(counts_percent.algoName == algoName)]
+            counts_percent_al["period"] = counts_percent_al["period"].astype(str)
+            
+            factors = list(zip(counts_percent_al["period"], counts_percent_al["state"]))
+            
+            source = ColumnDataSource(data=dict(
+                        x=factors,
+                        period=counts_percent_al["period"].tolist(),
+                        CONSMINUS=counts_percent_al["CONSMINUS"].tolist(),
+                        CONSPLUS=counts_percent_al["CONSPLUS"].tolist(),
+                        DIS=counts_percent_al["DIS"].tolist(),
+                        PROD=counts_percent_al["PROD"].tolist()
+                        ))
+            
+            plotBarMode = figure(x_range=FactorRange(*factors), height=450,
+                                 toolbar_location=None, 
+                                 tools=TOOLS_MODES,
+                                 #active_drag="box_zoom",  # enable box zoom by default
+                                 tooltips=TOOLTIPS_STATE_MODES)
+        
+            
+            plotBarMode.vbar_stack(modes, x='x', width=0.9, alpha=0.5, 
+                                   color=["blue", "red", "yellow", "cyan"], 
+                                   source=source,
+                                   legend_label=modes)
+            
+            plotBarMode.y_range.start = 0
+            plotBarMode.y_range.end = 1
+            plotBarMode.x_range.range_padding = 0.1
+            plotBarMode.xaxis.major_label_orientation = 1
+            plotBarMode.xgrid.grid_line_color = None
+            plotBarMode.legend.location = "top_center"
+            plotBarMode.legend.orientation = "horizontal"
+            plotBarMode.legend.click_policy = "hide"
+            plotBarMode.title = f" Distribution des strategies Modes from {algoName}: lr = {learning_rate}"
+            
+            plotBarMode.add_layout(Legend(), 'right')
+        
+            plotAlgoBarModes.append([plotBarMode])
+            
+        plotBarStateModes.append([plotAlgoBarModes])
+        
+    return plotBarStateModes
 ###############################################################################
 #                   visu bar plot of actions(modes) : Fin
 ###############################################################################
@@ -765,17 +932,74 @@ def plotQTTepo_t_minus_plus(df_rho_mu_epsilon_lambda:pd.DataFrame):
     
     learning_rates = df_rho_mu_epsilon_lambda.learning_rate.unique()
     for learning_rate in learning_rates:
+        
+        ######################    OLD Version : start   ########################
+        # df_lr_algos = df_rho_mu_epsilon_lambda[df_rho_mu_epsilon_lambda.learning_rate == learning_rate]
+        
+        # df_Qttepo = df_lr_algos[['period', 'algoName','prodit', 'consit', 'scenarioName']]\
+        #                 .groupby(["algoName","period"]).sum().reset_index()
+        # df_Qttepo.rename(columns={"prodit":"insg", "consit":"outsg"}, inplace=True)
+        
+        # df_Qttepo["Qttepo_t_minus"] = df_Qttepo["outsg"] - df_Qttepo["insg"]
+        # df_Qttepo['Qttepo_t_minus'] = df_Qttepo['Qttepo_t_minus'].apply(lambda x: x if x>=0 else 0)
+        
+        # df_Qttepo["Qttepo_t_plus"] = df_Qttepo["insg"] - df_Qttepo["outsg"]
+        # df_Qttepo['Qttepo_t_plus'] = df_Qttepo['Qttepo_t_plus'].apply(lambda x: x if x>=0 else 0)
+        
+        # plots_Qttepo = []
+        # for algoName in df_lr_algos.algoName.unique().tolist():
+        #     df_Qttepo_t_algo = df_Qttepo[df_Qttepo.algoName == algoName]
+            
+        #     plotQttepo_t_algo = figure(
+        #         title=f"{algoName} show QttEpo_t^[+,-] KPI for lr={learning_rate}",
+        #         height=300,
+        #         sizing_mode="stretch_width",  # use the full width of the parent element
+        #         tooltips=TOOLTIPS_LCOST,
+        #         output_backend="webgl",  # use webgl to speed up rendering (https://docs.bokeh.org/en/latest/docs/user_guide/output/webgl.html)
+        #         tools="pan,box_zoom,reset,save",
+        #         active_drag="box_zoom",  # enable box zoom by default
+        #     )
+            
+        #     plotQttepo_t_algo.line(x=df_Qttepo_t_algo["period"], 
+        #                            y=df_Qttepo_t_algo["Qttepo_t_minus"], 
+        #                            line_width=2, color="#00a933", alpha=0.8, 
+        #                            legend_label="Qttepo_t_minus")
+        #     plotQttepo_t_algo.scatter(x=df_Qttepo_t_algo["period"], 
+        #                               y=df_Qttepo_t_algo["Qttepo_t_minus"],
+        #                               size=5, color="#00a933", alpha=0.5)
+            
+        #     plotQttepo_t_algo.line(x=df_Qttepo_t_algo["period"], 
+        #                            y=df_Qttepo_t_algo["Qttepo_t_plus"], 
+        #                            line_width=2, color="#800080", alpha=0.8, 
+        #                            legend_label="Qttepo_t_plus")
+        #     plotQttepo_t_algo.scatter(x=df_Qttepo_t_algo["period"], 
+        #                               y=df_Qttepo_t_algo["Qttepo_t_plus"],
+        #                               size=5, color="#800080", alpha=0.5)
+            
+            
+            
+        #     plotQttepo_t_algo.legend.location = "top_left"
+        #     plotQttepo_t_algo.legend.click_policy = "hide"
+            
+        #     plots_Qttepo.append(plotQttepo_t_algo)
+            
+        # plot_Qttepo_s.append(plots_Qttepo)
+        ######################    OLD Version : END   ########################
+    
+        ######################    New Version : start   ########################
         df_lr_algos = df_rho_mu_epsilon_lambda[df_rho_mu_epsilon_lambda.learning_rate == learning_rate]
         
-        df_Qttepo = df_lr_algos[['period', 'algoName','prodit', 'consit', 'scenarioName']]\
-                        .groupby(["algoName","period"]).sum().reset_index()
-        df_Qttepo.rename(columns={"prodit":"insg", "consit":"outsg"}, inplace=True)
         
-        df_Qttepo["Qttepo_t_minus"] = df_Qttepo["outsg"] - df_Qttepo["insg"]
-        df_Qttepo['Qttepo_t_minus'] = df_Qttepo['Qttepo_t_minus'].apply(lambda x: x if x>=0 else 0)
+        cols = ["algoName","period","prosumers","prodit","consit","M_exec_lri"]
+        df_prodcons = df_lr_algos[cols].groupby(['algoName','period','M_exec_lri'])[["prodit","consit"]].sum()
+        df_prodcons.rename(columns={'prodit': 'insg', 'consit':'outsg'}, inplace=True)
+        df_prodcons['Qttepo_t_minus'] = df_prodcons['outsg'] - df_prodcons['insg']
+        df_prodcons['Qttepo_t_plus'] = df_prodcons['insg'] - df_prodcons['outsg']
         
-        df_Qttepo["Qttepo_t_plus"] = df_Qttepo["insg"] - df_Qttepo["outsg"]
-        df_Qttepo['Qttepo_t_plus'] = df_Qttepo['Qttepo_t_plus'].apply(lambda x: x if x>=0 else 0)
+        df_prodcons['Qttepo_t_minus'] = df_prodcons["Qttepo_t_minus"].where(df_prodcons['Qttepo_t_minus'] >= 0 , 0)
+        df_prodcons['Qttepo_t_plus'] = df_prodcons["Qttepo_t_plus"].where(df_prodcons['Qttepo_t_plus'] >= 0 , 0)
+        
+        df_Qttepo = df_prodcons.groupby(["algoName","period"]).mean().reset_index()
         
         plots_Qttepo = []
         for algoName in df_lr_algos.algoName.unique().tolist():
@@ -815,7 +1039,7 @@ def plotQTTepo_t_minus_plus(df_rho_mu_epsilon_lambda:pd.DataFrame):
             plots_Qttepo.append(plotQttepo_t_algo)
             
         plot_Qttepo_s.append(plots_Qttepo)
-    
+        ######################    New Version : END    ########################
     
     return plot_Qttepo_s
 ###############################################################################
@@ -1028,6 +1252,10 @@ def plot_all_figures_withMeanLRI_One_rhoMuEps(df_rho_mu_epsilon_lambda: pd.DataF
     
     plotBarModeBis = plot_barModesBis(df_rho_mu_epsilon_lambda=df_rho_mu_epsilon_lambda)
     
+    plotBarModeBis_refact = plot_barModesBis_refactoring(df_rho_mu_epsilon_lambda=df_rho_mu_epsilon_lambda)
+    
+    plotBarStateModes = plot_barStateModesBis_refactoring(df_rho_mu_epsilon_lambda=df_rho_mu_epsilon_lambda)
+    
     # plotQttepo = plotQTTepo(df_prosumers, scenarioCorePathDataViz)
     
     # plot_Perf = plot_performanceAlgo(df_prosumers, scenarioCorePathDataViz)
@@ -1053,6 +1281,8 @@ def plot_all_figures_withMeanLRI_One_rhoMuEps(df_rho_mu_epsilon_lambda: pd.DataF
             [plotQTstock_s],
             [plotSis_s], 
             [plotBarModeBis], 
+            [plotBarModeBis_refact],
+            [plotBarStateModes],
             # [plotQttepo], 
             [plot_Qttepo_s], 
             # # ps_X_Y_ai, 
@@ -1071,7 +1301,8 @@ def plot_all_figures_withMeanLRI_One_rhoMuEps(df_rho_mu_epsilon_lambda: pd.DataF
     save(lyt)
     
     
-def plot_all_figures_withMeanLRI(df: pd.DataFrame, scenarioCorePathDataViz: str, 
+def plot_all_figures_withMeanLRI(df: pd.DataFrame, period_min: int,
+                                 scenarioCorePathDataViz: str, 
                                  folder_2_search_LRI: str):
     """
     plot all figures from requests of latex document for all values of rhos, mus, epsilons, lambda_poissons
@@ -1098,7 +1329,8 @@ def plot_all_figures_withMeanLRI(df: pd.DataFrame, scenarioCorePathDataViz: str,
         
         df_rho_mu_epsilon_lambda = df[(df.rho==rho) & (df.mu==mu) & 
                                       (df.epsilon==epsilon) & 
-                                      (df.lambda_poisson == lambda_poisson)]
+                                      (df.lambda_poisson == lambda_poisson) &
+                                      (df.period>period_min)]
         plot_all_figures_withMeanLRI_One_rhoMuEps(df_rho_mu_epsilon_lambda=df_rho_mu_epsilon_lambda, 
                                                   scenarioCorePathDataViz=scenarioCorePathDataViz, 
                                                   folder_2_search_LRI=folder_2_search_LRI,
@@ -1123,6 +1355,8 @@ if __name__ == '__main__':
     scenarioFile = "./data_scenario_JeuDominique/dataFromQuentinAutomate50PeriodsMultipleParams.json"
     scenarioFile = "./data_scenario_JeuDominique/dataFromQuentinAutomate100PeriodsMultipleParams.json"
     
+    scenarioFile = "./data_scenario_JeuDominique/dataFromQuentinAutomate50PeriodsMultipleParams.json"
+    
     # scenarioFile = "./data_scenario_JeuDominique/dataFromQuentinAutomate150Periods.json"
     
     scenario = None
@@ -1145,6 +1379,7 @@ if __name__ == '__main__':
     scenarioCorePathDataViz = os.path.join(scenario["scenarioPath"], scenario_dir, "datas", "dataViz")
     
     plot_all_figures_withMeanLRI(df=df, 
+                                 period_min=scenario["simul"]["period_min"],
                                  scenarioCorePathDataViz=scenarioCorePathDataViz, 
                                  folder_2_search_LRI=folder_2_search_LRI)
     
