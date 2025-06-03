@@ -104,11 +104,11 @@ def monitoring_before_algorithm(file, application):
 def create_repo_for_save_jobs(scenario:dict):
     
     
-    scenarioCorePath = os.path.join(scenario["scenarioPath"], scenario["scenarioName"])
-    scenarioCorePathData = os.path.join(scenario["scenarioPath"], scenario["scenarioName"], "datas")
-    # scenarioCorePathDataAlgoName = os.path.join(scenario["scenarioPath"], scenarioName, "datas", scenario["execution_parameters"]["algoName"])
-    scenarioCorePathDataViz = os.path.join(scenario["scenarioPath"], scenario["scenarioName"], "datas", "dataViz")
-    scenarioCorePathDataResult = os.path.join(scenario["scenarioPath"], scenario["scenarioName"], "datas", "dataResult")
+    scenarioCorePath = os.path.join(scenario["scenarioPath"], scenario["name"], scenario['simul']['n_instance'], scenario["scenarioName"])
+    scenarioCorePathData = os.path.join(scenario["scenarioPath"], scenario["name"], scenario['simul']['n_instance'], scenario["scenarioName"], "datas")
+    # scenarioCorePathDataAlgoName = os.path.join(scenario["scenarioPath"], scenario["name"], scenario['simul']['n_instance'], scenarioName, "datas", scenario["execution_parameters"]["algoName"])
+    scenarioCorePathDataViz = os.path.join(scenario["scenarioPath"], scenario["name"], scenario['simul']['n_instance'], scenario["scenarioName"], "datas", "dataViz")
+    scenarioCorePathDataResult = os.path.join(scenario["scenarioPath"], scenario["name"], scenario['simul']['n_instance'], scenario["scenarioName"], "datas", "dataResult")
     scenario["scenarioCorePath"] = scenarioCorePath
     scenario["scenarioCorePathData"] = scenarioCorePathData
     # scenario["scenarioCorePathDataAlgoName"] = scenarioCorePathDataAlgoName
@@ -252,7 +252,7 @@ def load_dataset_to_application(g, scenario):
             application.SG.prosumers[i].smax = g.storage_max[i][t]
             
             if algoName == "Bestie" \
-                and scenario.get("simul").get("dataset").get("debug").get("activate") == True \
+                and eval(scenario.get("simul").get("dataset").get("debug").get("activate")) == True \
                 and scenario.get("simul").get("dataset").get("debug").get("strategies_bestie") is not None :
                 #print(f"** 4 **")
                 state = None
@@ -549,7 +549,7 @@ def run_algos_count_prodCartesien(scenario: dict, logfiletxt: str):
     None.
 
     """
-    scenarioName = f"{scenario['scenarioName']}_N{scenario['instance']['N_actors']}T{scenario['simul']['nbPeriod']}K{scenario['algo']['LRI_REPART']['maxstep']}"
+    scenarioName = f"{scenario['name']}_N{scenario['instance']['N_actors']}T{scenario['simul']['nbPeriod']}K{scenario['algo']['LRI_REPART']['maxstep']}"
     scenario["scenarioName"] = scenarioName
     
     
@@ -577,12 +577,15 @@ def run_algos_count_prodCartesien(scenario: dict, logfiletxt: str):
     prod_cart_NoLRI_LRI = it.chain(prod_cart_NoLRI, prod_cart_LRI)
     
     compteur = 0
+    cols=["n_instance", "algoName", "rho", "mu", "epsilon", "lambda_poisson", "learning_rate", "M_exec_lri", "ValSG", "QTStock"]
+    df_ValSG_QTstock = pd.DataFrame(columns=cols)
     for (algoName, rho, mu, epsilon, lambda_poisson, learning_rate, M_exec_lri) in prod_cart_NoLRI_LRI:
         
         start = time.time()
         
         execution_parameters = dict()
         execution_parameters["algoName"] = algoName
+        execution_parameters["n_instance"] = scenario["simul"]["n_instance"]
         execution_parameters["rho"] = rho
         execution_parameters["mu"] = mu
         execution_parameters["epsilon"] = epsilon
@@ -591,7 +594,7 @@ def run_algos_count_prodCartesien(scenario: dict, logfiletxt: str):
         execution_parameters["M_exec_lri"] = M_exec_lri
         scenario["execution_parameters"] = execution_parameters
         
-        scenarioCorePathDataAlgoName = os.path.join(scenario["scenarioPath"], scenarioName, "datas", scenario["execution_parameters"]["algoName"])
+        scenarioCorePathDataAlgoName = os.path.join(scenario["scenarioCorePathData"], scenario["execution_parameters"]["algoName"])
         scenario["scenarioCorePathDataAlgoName"] = scenarioCorePathDataAlgoName
         
         
@@ -601,7 +604,7 @@ def run_algos_count_prodCartesien(scenario: dict, logfiletxt: str):
         # # # Initialisation of the apps
         # g = Initialization_game(scenario)
         
-        if algoName == "Bestie" and scenario["simul"]["dataset"].get("debug").get("activate") == True:
+        if algoName == "Bestie" and eval(scenario["simul"]["dataset"].get("debug").get("activate")) == True:
             g.generate_strategies_for_bestie(scenario)
         
         
@@ -647,6 +650,12 @@ def run_algos_count_prodCartesien(scenario: dict, logfiletxt: str):
             application.runSyA(plot=False, file=file, scenario=scenario)
             pass
         
+        # compute ValSG and QTStock
+        execution_parameters["ValSG"] = application.valSG_A
+        execution_parameters["QTStock"] = application.QTStock_A
+        df_ValSG_QTstock.loc[len(df_ValSG_QTstock)] = execution_parameters
+        
+        
         # save dataframe
         save_df(algoName=algoName, rho=rho, mu=mu, learning_rate=learning_rate, M_exec_lri=M_exec_lri, 
                 epsilon=epsilon, lambda_poisson=lambda_poisson,
@@ -668,6 +677,11 @@ def run_algos_count_prodCartesien(scenario: dict, logfiletxt: str):
         
     
     print(f"compteur = {compteur}")
+    resExecNinstances = os.path.join(scenario["scenarioPath"], scenario["name"], "resultExecNinstances")
+    Path(resExecNinstances).mkdir(parents=True, exist_ok=True)
+    df_ValSG_QTstock.to_csv(os.path.join(resExecNinstances,
+                                         f"dataframe_ValSG_QTStock_{scenario['simul']['n_instance']}.csv") )
+    
 #------------------------------------------------------------------------------
 #                FIN :  algo run with loading instance
 #------------------------------------------------------------------------------

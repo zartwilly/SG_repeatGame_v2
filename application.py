@@ -47,6 +47,7 @@ class App:
     valNoSG_A = None # sum of prices payed by all actors during all periods by running algo A without SG
     valSG_A = None # sum of prices payed by all actors during all periods by running algo A with SG
     valNoSGCost_A = None # 
+    QTStock_A = None # sum of all prosumers' QTStock for all periods 
     dicoLRI_onePeriod_oneStep = None # a dictionnary to save a running for one period and one step
     Qttepo_plus = None     # compute quantity prosumers must give to EPO
     Qttepo_minus = None     # compute quantity prosumers must receive to EPO
@@ -67,6 +68,7 @@ class App:
         self.ObjValNoSG_ai = np.zeros(N_actors)
         self.valNoSG_A = 0
         self.valSG_A = 0
+        self.QTStock_A = 0
         self.dicoLRI_onePeriod_oneStep = dict()
         self.Qttepo_plus = 0
         self.Qttepo_minus = 0
@@ -190,6 +192,17 @@ class App:
         """
         self.Qttepo_minus = np.sum(self.SG.QttEpo_minus)
         self.Qttepo_plus = np.sum(self.SG.QttEpo_plus)
+        
+    def computeSumQTStock(self):
+        """
+        compute the sum of QTStock for all prosumers for all periods
+
+        Returns
+        -------
+        None.
+
+        """
+        self.QTStock_A = np.sum(self.SG.QTStock_t)
         
         
         
@@ -683,6 +696,7 @@ class App:
         self.computeY_ai()
         self.computeObjSG()
         self.computeValNoSGCost_A()
+        self.computeSumQTStock()
         
         #self.saveMetricsOfGame()
         # save all metrics to dataframe with columns obj_ai, objNoSG_ai, X_ai, valNoSG_ai
@@ -1047,6 +1061,7 @@ class App:
         self.computeObjSG()
         self.computeValNoSGCost_A()
         self.computeQttepo()
+        self.computeSumQTStock()
         
         # plot variables ValNoSG, ValSG
         
@@ -1138,6 +1153,7 @@ class App:
         self.computeObjSG()
         self.computeValNoSGCost_A()
         self.computeQttepo()
+        
         
         # plot variables ValNoSG, ValSG
     

@@ -41,6 +41,8 @@ class Smartgrid :
     
     NE_brute_t = None       # save brute Nash Equilibrium at each period
     
+    QTStock = None          # sum of all prosumers' QTStock for one period 
+    
     # TODELETE
     # DispSG = None
     # TauS = None # contains the tau array for all players at period t 
@@ -116,6 +118,7 @@ class Smartgrid :
         self.Free = np.zeros(shape=(nbperiod,rho+1))
         
         self.NE_brute_t = np.full_like(np.zeros(shape=(nbperiod,N)), [-1 for i in range(N)]) #np.zeros(nbperiod)
+        self.QTStock_t = np.zeros(nbperiod)
         # self.TauS = np.ndarray(shape=(N, rho+1))
         # self.DispSG = np.zeros(rho+1)
         # self.GNeeds = np.zeros(shape=(nbperiod,rho+1))
@@ -581,12 +584,16 @@ class Smartgrid :
                 
         #     self.prosumers[i].QTStock[period] = somme
             
+        sum_qtstock_t = -10
         for i in range(self.prosumers.size):
             
             value = ( 1 + 2 * ( self.prosumers[i].poisson_random_value[period] - 0.5) * epsilon) \
                     * self.prosumers[i].EstimStock[period]
             
             self.prosumers[i].QTStock[period] = value
+            sum_qtstock_t += value
+            
+        self.QTStock_t[period] = sum_qtstock_t
         
         
     def computeValStock(self, period:int) -> float:
