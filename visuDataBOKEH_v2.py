@@ -29,8 +29,8 @@ from bokeh.models import HoverTool
 ###############################################################################
 #                   CONSTANTES: debut
 ###############################################################################
-COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', 
-          '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+COLORS_PROSUMERS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', 
+                    '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
 COLORS = {"SyA":"gray", "Bestie":"red", "CSA":"yellow", "SSA":"green", "LRI_REPART":"blue"}
 
 TOOLS="""hover,crosshair,pan,wheel_zoom,zoom_in,zoom_out,box_zoom,undo,redo,
@@ -42,6 +42,7 @@ TOOLTIPS_LCOST = [("value", "$y{(0,0)}")]
 TOOLTIPS_MODES = [("value", "$y{.5,3}")]
 TOOLTIPS_STATE_MODES = "$name @period: @$name"
 TOOLTIPS_XY_ai = [("value", "$y{(0.1,1)}")]
+TOOLTIPS_PCS_ai = [("period", "@period"), ("state", "@state"), ("mode","@mode"), ("y", "$y")]
 ###############################################################################
 #                   CONSTANTES: FIN
 ###############################################################################
@@ -244,7 +245,8 @@ def plot_performanceMeasures(df_valSG: pd.DataFrame, df_valNoSG: pd.DataFrame):
             }
         source = ColumnDataSource(data=data)
         
-        plot_Perf_MeanLri = figure(x_range=data["algoName"], title=f"Performance Measures from learning rate {learning_rate}",
+        plot_Perf_MeanLri = figure(x_range=data["algoName"], 
+                    title=f"Performance Measures from learning rate {learning_rate}",
                     height=450, toolbar_location=None, tools="hover",
                     tooltips="$name @algoName: @$name")
     
@@ -378,7 +380,9 @@ def plot_barStack_valSG_over_statePeriod(df_valSG_State_T):
     learning_rates = df_valSG_State_T.learning_rate.unique()
     algoNames = df_valSG_State_T.algoName.unique().tolist()
     print(f"AlgoNames = {algoNames}, df_valSG_State_T={df_valSG_State_T.shape}")
-    algoNames.remove('Bestie')
+    if 'Bestie' in algoNames:
+        algoNames.remove('Bestie')
+    
     for (learning_rate, algoName) in it.product(learning_rates, algoNames):
         
         df_algo_lr_valSG_State_T = df_valSG_State_T[
@@ -1204,6 +1208,83 @@ def plot_nashEquilibrium_byPeriod(df_rho_mu_epsilon_lambda:pd.DataFrame, folder_
 ###############################################################################
 
 ###############################################################################
+#          visu Production, Consumption over time for all prosumers : debut
+###############################################################################
+def plot_evolutionProductionConsumptionStock_over_time(df_rho_mu_epsilon_lambda:pd.DataFrame):
+    """
+    plot evolution of production and consumption and Stock over time for all 
+    algorithms for one value of rho, mu, epsilon
+
+    Parameters
+    ----------
+    df_rho_mu_epsilon_lambda : pd.DataFrame
+        DESCRIPTION.
+
+    Returns
+    -------
+    None.
+
+    """
+
+    plot_PiCiSis_s = []
+    
+    learning_rates = df_rho_mu_epsilon_lambda.learning_rate.unique()
+    for learning_rate in learning_rates:
+        
+        df_lr_algos = df_rho_mu_epsilon_lambda[df_rho_mu_epsilon_lambda.learning_rate == learning_rate]
+        
+        plot_algos = []
+        for algoName in df_rho_mu_epsilon_lambda.algoName.unique():
+            
+            df_lr_algo = df_lr_algos[ df_lr_algos.algoName == algoName]
+            
+            plot_PCS_s = []
+            
+            for X in ["production", "consumption", "storage"]:
+                # set up the figure
+                plot_X = figure(
+                    title=f" show {X} for {algoName} from learning rate {learning_rate}",
+                    height=300,
+                    sizing_mode="stretch_width",  # use the full width of the parent element
+                    tooltips=TOOLTIPS_PCS_ai,
+                    output_backend="webgl",  # use webgl to speed up rendering (https://docs.bokeh.org/en/latest/docs/user_guide/output/webgl.html)
+                    tools="pan,box_zoom,reset,save",
+                    active_drag="box_zoom",  # enable box zoom by default
+                )
+                
+                for num_pros, prosumer_x in enumerate(df_lr_algo.prosumers.unique()):
+                    
+                    df_lr_algo_pros = df_lr_algo[(df_lr_algo.prosumers == prosumer_x) & 
+                                                 (df_lr_algo.M_exec_lri == 0)]
+                    
+                    source = ColumnDataSource(data=dict(
+                                period=list(df_lr_algo_pros["period"].unique()),
+                                X=list(df_lr_algo_pros[X]),
+                                state=list( df_lr_algo_pros["state"] ),
+                                mode=list( df_lr_algo_pros["mode"] )
+                            ))
+                    
+                    plot_X.line(x="period", y='X', source=source, 
+                                line_width=2, color=COLORS_PROSUMERS[num_pros], 
+                                alpha=0.8, 
+                                legend_label=prosumer_x)
+                    plot_X.legend.click_policy = "hide"
+                    
+                plot_PCS_s.append(plot_X)
+                
+            plot_algos.append(plot_PCS_s)
+            
+        
+        plot_PiCiSis_s.append(plot_algos)        
+            
+    plot_PiCiSis_s = [x for sublist in plot_PiCiSis_s for x in sublist]
+    return plot_PiCiSis_s
+        
+###############################################################################
+#          visu Production, Consumption over time for all prosumers : Fin
+###############################################################################
+
+###############################################################################
 #                   visu all plots with mean LRI : debut
 ###############################################################################
 def plot_all_figures_withMeanLRI_One_rhoMuEps(df_rho_mu_epsilon_lambda: pd.DataFrame, 
@@ -1222,7 +1303,7 @@ def plot_all_figures_withMeanLRI_One_rhoMuEps(df_rho_mu_epsilon_lambda: pd.DataF
     scenarioCorePathDataViz: str
         DESCRIPTION.
         
-    Returns
+    ReturnsdataFromQuentinAutomate50PeriodsMultipleParams
     -------
     None.
 
@@ -1269,9 +1350,13 @@ def plot_all_figures_withMeanLRI_One_rhoMuEps(df_rho_mu_epsilon_lambda: pd.DataF
     
     # p_distr = plot_min_proba_distribution(df_prosumers, scenarioCorePathDataViz)
     
+    plot_PiCiSis_s = plot_evolutionProductionConsumptionStock_over_time(
+                        df_rho_mu_epsilon_lambda=df_rho_mu_epsilon_lambda)
+    
     # create a layout
     lyt = layout(
         [
+            
             [plot_Perf_MeanLri_s], 
             [plotValSG_s], 
             [plotValNoSG_s], 
@@ -1287,6 +1372,7 @@ def plot_all_figures_withMeanLRI_One_rhoMuEps(df_rho_mu_epsilon_lambda: pd.DataF
             [plot_Qttepo_s], 
             # # ps_X_Y_ai, 
             plot_NE_brute_s, 
+            plot_PiCiSis_s
             # # p_distr
             # # # [p1, p2],  # the first row contains two plots, spaced evenly across the width of notebook
             # # # [p3],  # the second row contains only one plot, spanning the width of notebook
