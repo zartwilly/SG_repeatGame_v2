@@ -664,10 +664,16 @@ def run_algos_count_prodCartesien(scenario: dict, logfiletxt: str):
     
         monitoring_after_algorithm(algoName=algoName, file=file, application=application)
         
-        # Save application to Pickle format
+        # ----  Save application to Pickle format : debut -------------------
         with open(os.path.join(scenarioCorePathDataAlgoNameParam, scenarioName+"_"+algoName+"_APP"+'.pkl'), 'wb') as f:  # open a text file
             pickle.dump(application, f)
         f.close()
+        resAppInst = os.path.join(scenario["scenarioPath"], scenario["name"], "resultAPPInstances")
+        Path(resAppInst).mkdir(parents=True, exist_ok=True)
+        with open(os.path.join(resAppInst, scenarioName+"_"+algoName+"_EXEC_"+str(M_exec_lri)+"_APP"+'.pkl'), 'wb') as f:  # open a text file
+            pickle.dump(application, f)
+        f.close()
+        # ----  Save application to Pickle format : Fin -------------------
         
         
         fileTemps.write(f"{algoName}, mu={mu}, rho={rho}, epsilon={epsilon}, lambda_poisson={lambda_poisson}, lr={learning_rate}, M_exec_lri={M_exec_lri} ==> *** runtime= { round(time.time() - start, 4)} *** \n")

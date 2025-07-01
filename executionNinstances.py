@@ -169,7 +169,8 @@ def merge_DF_4_ValSG_QTStock(folder, folder_2_save):
     
     return merged_df
     
-def executionVisuBokeh_OneInstance(scenario: dict, n_instance:str):
+def executionVisuBokeh_OneInstance(scenario: dict, n_instance:str, 
+                                   bool_runAlgo:bool, logfiletxt:str):
     """
     
 
@@ -238,7 +239,8 @@ if __name__ == '__main__':
     N_instance = scenario["simul"]["N_instance"]
     for n_instance in range(N_instance):
         
-        executionVisuBokeh_OneInstance(scenario=scenario, n_instance=n_instance)
+        executionVisuBokeh_OneInstance(scenario=scenario, n_instance=n_instance, 
+                                       bool_runAlgo=bool_runAlgo)
         
     print(f"runtime = {time.time() - ti}")
     
