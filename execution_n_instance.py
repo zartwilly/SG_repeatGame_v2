@@ -96,7 +96,12 @@ if __name__ == '__main__':
     logfiletxt = "traceApplication.txt"
     
     # scenarioFile = "./data_scenario_JeuDominique/automateTest.json"
+    n_instance = 12
     scenarioFile = "./data_scenario_JeuDominique/dataFromQuentinAutomate50Periods_instance12.json"
+    n_instance = 1
+    scenarioFile = "./data_scenario_JeuDominique/dataFromQuentinAutomate50Periods1einstance.json"
+    n_instance = 1
+    scenarioFile = "./data_scenario_JeuDominique/dataFromQuentinAutomate50Periods1einstance_BESTIE.json"
     
     bool_runAlgo = True # False, True
     
@@ -105,7 +110,7 @@ if __name__ == '__main__':
         scenario = json.load(file)
         pass
     
-    n_instance = 12
+    
     exec_N_insts.executionVisuBokeh_OneInstance(scenario=scenario, 
                                                 n_instance=n_instance,
                                                 bool_runAlgo=bool_runAlgo,
@@ -115,4 +120,6 @@ if __name__ == '__main__':
     folder = os.path.join(scenario["scenarioPath"], scenario["name"], "resultAPPInstances")
     dico_exec = merge_DF_from_all_algos_and_LRI_executions(folder=folder)
 
-
+    print("\n\n\n\n------------------------------------------------------------------")
+    print(f"-----------runtime = {time.time() - ti}")
+    print("-----------------------------------------------------------------")

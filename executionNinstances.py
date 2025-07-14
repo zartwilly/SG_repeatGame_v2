@@ -229,6 +229,7 @@ if __name__ == '__main__':
     logfiletxt = "traceApplication.txt"
     
     scenarioFile = "./data_scenario_JeuDominique/dataFromQuentinAutomate5Periods10instances_TEST.json"
+    scenarioFile = "./data_scenario_JeuDominique/dataFromQuentinAutomate50Periods1einstance.json"
     
     scenario = None
     with open(scenarioFile) as file:
@@ -239,8 +240,10 @@ if __name__ == '__main__':
     N_instance = scenario["simul"]["N_instance"]
     for n_instance in range(N_instance):
         
-        executionVisuBokeh_OneInstance(scenario=scenario, n_instance=n_instance, 
-                                       bool_runAlgo=bool_runAlgo)
+        executionVisuBokeh_OneInstance(scenario=scenario, 
+                                       n_instance=n_instance, 
+                                       bool_runAlgo=bool_runAlgo, 
+                                       logfiletxt=logfiletxt)
         
     print(f"runtime = {time.time() - ti}")
     

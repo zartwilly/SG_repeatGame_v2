@@ -354,7 +354,7 @@ if __name__ == "__main__":
     with open(scenarioFile) as file:
         scenario = json.load(file)
         
-    g = Instancegenaratorv2(N=scenario["instance"]["N_actors"],
+    g = Instancegenaratorversion2(N=scenario["instance"]["N_actors"],
                             T=scenario["simul"]["nbPeriod"] 
                             )
     

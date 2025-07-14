@@ -623,6 +623,7 @@ def plot_sumStorage(df_rho_mu_epsilon_lambda:pd.DataFrame):
     """
 
     plotSis_s = []
+    plotSis_sum_s = []
     
     learning_rates = df_rho_mu_epsilon_lambda.learning_rate.unique()
     for learning_rate in learning_rates:
@@ -633,7 +634,7 @@ def plot_sumStorage(df_rho_mu_epsilon_lambda:pd.DataFrame):
                     .groupby(["algoName","period","M_exec_lri"])\
                         .mean().reset_index()\
                     .groupby(["algoName","period"]).sum().reset_index()
-                    
+        
         N_prosumers = len(df_lr_algos.prosumers.unique())
         
         mask_100Lri = ~df_Sis.astype(str).apply(lambda row: row.str.startswith("LRI")).any(axis=1)
@@ -645,7 +646,7 @@ def plot_sumStorage(df_rho_mu_epsilon_lambda:pd.DataFrame):
         
         df_Sis_merge = pd.concat([df_Sis_100lri, df_Sis_lri])
         
-        # set up the figure
+        # set up the figure for plotting over time
         plotSis = figure(
             title=f" show Storage KPI for all algorithms from learning rate {learning_rate}",
             height=300,
@@ -668,8 +669,32 @@ def plot_sumStorage(df_rho_mu_epsilon_lambda:pd.DataFrame):
         plotSis.legend.click_policy = "hide"
         
         plotSis_s.append(plotSis)
+        
+        
+        # set up the figure for plotting barplot with algoName in x-axis
+        df_Sis_sum = df_lr_algos[["period","algoName","storage","M_exec_lri"]]\
+                    .groupby(["algoName","M_exec_lri"])\
+                        .mean().reset_index()\
+                    .groupby(["algoName"]).sum().reset_index()
+        data = { 
+            'algoName': list(df_Sis_sum['algoName']),
+            'sum_Storage': list(df_Sis_sum['storage'])
+            }
+        source = ColumnDataSource(data=data)
+        
+        plotSis_sum = figure(x_range=data["algoName"], 
+                    title=f"Sum of storage from learning rate {learning_rate}",
+                    height=450, toolbar_location=None, tools="hover",
+                    tooltips="$name @algoName: @sum_Storage")
     
-    return plotSis_s
+        plotSis_sum.vbar(x=dodge('algoName', -0.25, 
+                                        range=plotSis_sum.x_range), 
+                                top='sum_Storage', source=source,
+                                width=0.2, color="green", legend_label="Sum_Storage")
+        plotSis_sum_s.append(plotSis_sum)
+        
+    
+    return plotSis_s, plotSis_sum_s
     
 ###############################################################################
 #                   plot sum storage all LRI, SSA, Bestie : Fin
@@ -1327,7 +1352,7 @@ def plot_all_figures_withMeanLRI_One_rhoMuEps(df_rho_mu_epsilon_lambda: pd.DataF
     
     plotQTstock_s = plot_sumQTStock(df_rho_mu_epsilon_lambda=df_rho_mu_epsilon_lambda)
     
-    plotSis_s = plot_sumStorage(df_rho_mu_epsilon_lambda=df_rho_mu_epsilon_lambda)
+    plotSis_s, plotSis_sum_s = plot_sumStorage(df_rho_mu_epsilon_lambda=df_rho_mu_epsilon_lambda)
     
     # #plotBarMode = plot_barModes(df_prosumers, scenarioCorePathDataViz)
     
@@ -1365,6 +1390,7 @@ def plot_all_figures_withMeanLRI_One_rhoMuEps(df_rho_mu_epsilon_lambda: pd.DataF
             # [plotLcost_s],
             [plotQTstock_s],
             [plotSis_s], 
+            [plotSis_sum_s],
             [plotBarModeBis], 
             [plotBarModeBis_refact],
             [plotBarStateModes],
