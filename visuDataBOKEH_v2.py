@@ -77,9 +77,12 @@ def find_csvfile(folder_2_search:str, folder_2_save:str, filename_csv:str="dataf
     df = pd.concat([pd.read_csv(file) for file in csv_files], ignore_index=True);
     
     # fill na value ()
-    df['scenarioName'].ffill(inplace=True)
-    df['coef_phiepoplus'].ffill(inplace=True)
-    df['coef_phiepominus'].ffill(inplace=True)
+    df['scenarioName'] = df['scenarioName'].ffill()
+    df['coef_phiepoplus'] = df['coef_phiepoplus'].ffill()
+    df['coef_phiepominus'] = df['coef_phiepominus'].ffill()
+    # df['scenarioName'].ffill(inplace=True)
+    # df['coef_phiepoplus'].ffill(inplace=True)
+    # df['coef_phiepominus'].ffill(inplace=True)
     
     # delete columns prosumers.1 and Unnamed: 0
     df = df.drop(['prosumers.1', 'Unnamed: 0'], axis=1)
@@ -740,20 +743,34 @@ def plot_barModesBis(df_rho_mu_epsilon_lambda:pd.DataFrame):
         df_stoc["period"] = df_stoc["period"].astype(str)
         factors = list(zip(df_stoc["algoName"], df_stoc["period"]))
         
-        source = ColumnDataSource(data=dict(
-                    x=factors,
-                    CONSMINUS=df_stoc["CONSMINUS"].tolist(),
-                    CONSPLUS=df_stoc["CONSPLUS"].tolist(),
-                    DIS=df_stoc["DIS"].tolist(),
-                    PROD=df_stoc["PROD"].tolist()
-                    ))
+        source = None
+        dico_colDataSource = dict()
+        if 'PROD' in df_stoc.columns:
+            dico_colDataSource['PROD'] = df_stoc["PROD"].tolist()
+        if "DIS" in df_stoc.columns:
+            dico_colDataSource["DIS"] = df_stoc["DIS"].tolist()
+        if "CONSPLUS" in df_stoc.columns:
+            dico_colDataSource["CONSPLUS"] = df_stoc["CONSPLUS"].tolist()
+        if "CONSMINUS" in df_stoc.columns:
+            dico_colDataSource["CONSMINUS"] = df_stoc["CONSMINUS"].tolist()
+        dico_colDataSource["x"] = factors    
+            
+        source = ColumnDataSource(data=dico_colDataSource)
+        # source = ColumnDataSource(data=dict(
+        #             x=factors,
+        #             CONSMINUS=df_stoc["CONSMINUS"].tolist(),
+        #             CONSPLUS=df_stoc["CONSPLUS"].tolist(),
+        #             DIS=df_stoc["DIS"].tolist(),
+        #             PROD=df_stoc["PROD"].tolist()
+        #             ))
         
         plotBarMode = figure(x_range=FactorRange(*factors), height=450,
                              toolbar_location=None, tools="", 
                              tooltips=TOOLTIPS_MODES)
     
         plotBarMode.vbar_stack(modes, x='x', width=0.9, alpha=0.5, 
-                               color=["blue", "red", "yellow", "cyan"], 
+                               #color=["blue", "red", "yellow", "cyan"], 
+                               color=Category10[len(modes)],
                                source=source,
                                legend_label=modes)
         
@@ -814,22 +831,63 @@ def plot_barModesBis_refactoring(df_rho_mu_epsilon_lambda:pd.DataFrame):
         counts_percent["period"] = counts_percent["period"].astype(str)
         factors = list(zip(counts_percent["algoName"], counts_percent["period"]))
         
-        source = ColumnDataSource(data=dict(
-                    x=factors,
-                    period=counts_percent["period"].tolist(),
-                    CONSMINUS=counts_percent["CONSMINUS"].tolist(),
-                    CONSPLUS=counts_percent["CONSPLUS"].tolist(),
-                    DIS=counts_percent["DIS"].tolist(),
-                    PROD=counts_percent["PROD"].tolist()
-                    ))
+        
+        source = None
+        dico_colDataSource = dict()
+        if 'PROD' in counts_percent.columns:
+            dico_colDataSource['PROD'] = counts_percent["PROD"].tolist()
+        if "DIS" in counts_percent.columns:
+            dico_colDataSource["DIS"] = counts_percent["DIS"].tolist()
+        if "CONSPLUS" in counts_percent.columns:
+            dico_colDataSource["CONSPLUS"] = counts_percent["CONSPLUS"].tolist() 
+        if "CONSMINUS" in counts_percent.columns:
+            dico_colDataSource["CONSMINUS"] = counts_percent["CONSMINUS"].tolist()
+        dico_colDataSource["x"] = factors
+        dico_colDataSource["period"] = counts_percent["period"].tolist()
+        # if 'PROD' in counts_percent.columns:
+        #     dico_colDataSource['PROD'] = counts_percent["PROD"].tolist()
+        # else:
+        #     dico_colDataSource['PROD'] = np.zeros(shape=counts_percent.shape[0])
+        
+        # if "DIS" in counts_percent.columns:
+        #     dico_colDataSource["DIS"] = counts_percent["DIS"].tolist()
+        # else:
+        #     dico_colDataSource["DIS"] = np.zeros(shape=counts_percent.shape[0])
+            
+        # if "CONSPLUS" in counts_percent.columns:
+        #     dico_colDataSource["CONSPLUS"] = counts_percent["CONSPLUS"].tolist()
+        # else:
+        #     dico_colDataSource["CONSPLUS"] = np.zeros(shape=counts_percent.shape[0])
+            
+        # if "CONSMINUS" in counts_percent.columns:
+        #     dico_colDataSource["CONSMINUS"] = counts_percent["CONSMINUS"].tolist()
+        # else:
+        #     dico_colDataSource["CONSMINUS"] = np.zeros(shape=counts_percent.shape[0])
+        # dico_colDataSource["x"] = factors
+        # dico_colDataSource["period"] = counts_percent["period"].tolist()
+            
+        source = ColumnDataSource(data=dico_colDataSource)
+        
+        # source = ColumnDataSource(data=dict(
+        #             x=factors,
+        #             period=counts_percent["period"].tolist(),
+        #             CONSMINUS=counts_percent["CONSMINUS"].tolist(),
+        #             CONSPLUS=counts_percent["CONSPLUS"].tolist(),
+        #             DIS=counts_percent["DIS"].tolist(),
+        #             PROD=counts_percent["PROD"].tolist()
+        #             ))
         
         plotBarMode = figure(x_range=FactorRange(*factors), height=450,
                              toolbar_location=None, tools="", 
                              tooltips=TOOLTIPS_STATE_MODES)
     
         
+        # plotBarMode.vbar_stack(modes, x='x', width=0.9, alpha=0.5, 
+        #                        color=["blue", "red", "yellow", "cyan"], 
+        #                        source=source,
+        #                        legend_label=modes)
         plotBarMode.vbar_stack(modes, x='x', width=0.9, alpha=0.5, 
-                               color=["blue", "red", "yellow", "cyan"], 
+                               color=Category10[len(modes)], 
                                source=source,
                                legend_label=modes)
         
@@ -897,14 +955,28 @@ def plot_barStateModesBis_refactoring(df_rho_mu_epsilon_lambda:pd.DataFrame):
             
             factors = list(zip(counts_percent_al["period"], counts_percent_al["state"]))
             
-            source = ColumnDataSource(data=dict(
-                        x=factors,
-                        period=counts_percent_al["period"].tolist(),
-                        CONSMINUS=counts_percent_al["CONSMINUS"].tolist(),
-                        CONSPLUS=counts_percent_al["CONSPLUS"].tolist(),
-                        DIS=counts_percent_al["DIS"].tolist(),
-                        PROD=counts_percent_al["PROD"].tolist()
-                        ))
+            # source = ColumnDataSource(data=dict(
+            #             x=factors,
+            #             period=counts_percent_al["period"].tolist(),
+            #             CONSMINUS=counts_percent_al["CONSMINUS"].tolist(),
+            #             CONSPLUS=counts_percent_al["CONSPLUS"].tolist(),
+            #             DIS=counts_percent_al["DIS"].tolist(),
+            #             PROD=counts_percent_al["PROD"].tolist()
+            #             ))
+            source = None
+            dico_colDataSource = dict()
+            if 'PROD' in counts_percent_al.columns:
+                dico_colDataSource['PROD'] = counts_percent_al["PROD"].tolist()
+            if "DIS" in counts_percent.columns:
+                dico_colDataSource["DIS"] = counts_percent_al["DIS"].tolist()
+            if "CONSPLUS" in counts_percent.columns:
+                dico_colDataSource["CONSPLUS"] = counts_percent_al["CONSPLUS"].tolist() 
+            if "CONSMINUS" in counts_percent.columns:
+                dico_colDataSource["CONSMINUS"] = counts_percent_al["CONSMINUS"].tolist()
+            dico_colDataSource["x"] = factors
+            dico_colDataSource["period"] = counts_percent_al["period"].tolist()
+            
+            source = ColumnDataSource(data=dico_colDataSource)
             
             plotBarMode = figure(x_range=FactorRange(*factors), height=450,
                                  toolbar_location=None, 
@@ -914,7 +986,8 @@ def plot_barStateModesBis_refactoring(df_rho_mu_epsilon_lambda:pd.DataFrame):
         
             
             plotBarMode.vbar_stack(modes, x='x', width=0.9, alpha=0.5, 
-                                   color=["blue", "red", "yellow", "cyan"], 
+                                   #color=["blue", "red", "yellow", "cyan"], 
+                                   color=Category10[len(modes)],
                                    source=source,
                                    legend_label=modes)
             
@@ -1442,7 +1515,7 @@ def plot_all_figures_withMeanLRI(df: pd.DataFrame, period_min: int,
         df_rho_mu_epsilon_lambda = df[(df.rho==rho) & (df.mu==mu) & 
                                       (df.epsilon==epsilon) & 
                                       (df.lambda_poisson == lambda_poisson) &
-                                      (df.period>period_min)]
+                                      (df.period>=period_min)]
         plot_all_figures_withMeanLRI_One_rhoMuEps(df_rho_mu_epsilon_lambda=df_rho_mu_epsilon_lambda, 
                                                   scenarioCorePathDataViz=scenarioCorePathDataViz, 
                                                   folder_2_search_LRI=folder_2_search_LRI,
