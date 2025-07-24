@@ -151,17 +151,33 @@ def merge_DF_4_ValSG_QTStock(folder, folder_2_save):
             
             # compter les N fois de ValSG
             cols = ['n_instance', 'algoName', 'ValSG', 'QTStock', 'ValSG_div_min', 'QTStock_div_min']
-            df_tmp_valsg = df_N_inst[cols].pivot(index='n_instance', columns='algoName', values=['ValSG_div_min'])
+            # df_tmp_valsg = df_N_inst[cols].pivot(index='n_instance', columns='algoName', values=['ValSG_div_min'])
+            df_tmp_valsg = df_N_inst[cols].pivot_table(index='n_instance', 
+                                                       columns='algoName', 
+                                                       values='ValSG_div_min', 
+                                                       aggfunc='first')
             df_tmp_valsg_cp = df_tmp_valsg.copy()
             df_tmp_valsg_cp[df_tmp_valsg_cp != 1] = 0
             df_res_valsg = pd.merge(df_tmp_valsg, df_tmp_valsg_cp, left_index=True, right_index=True)
             
-            df_tmp_qtstock = df_N_inst[cols].pivot(index='n_instance', columns='algoName', values=['QTStock_div_min'])
+            # df_tmp_qtstock = df_N_inst[cols].pivot(index='n_instance', columns='algoName', values=['QTStock_div_min'])
+            df_tmp_qtstock = df_N_inst[cols].pivot_table(index='n_instance', 
+                                                         columns='algoName', 
+                                                         values='QTStock_div_min', 
+                                                         aggfunc='first'
+                                                         )
             df_tmp_qtstock_cp = df_tmp_qtstock.copy()
             df_tmp_qtstock_cp[df_tmp_qtstock_cp != 1] = 0
             df_res_qtstock = pd.merge(df_tmp_qtstock, df_tmp_qtstock_cp, left_index=True, right_index=True)
             
-            df_res_valsg_qtstock = df_N_inst[cols].pivot(index='n_instance', columns='algoName', values=['ValSG','QTStock'])
+            # df_res_valsg_qtstock = df_N_inst[cols].pivot(index='n_instance', columns='algoName', values=['ValSG','QTStock'])
+            df_res_valsg_qtstock = df_N_inst.pivot_table(
+                                            index='n_instance',
+                                            columns='algoName',
+                                            values=['ValSG', 'QTStock'],
+                                            aggfunc={'ValSG': 'mean', 'QTStock': 'mean'},
+                                            fill_value=0
+                                        )
             
             df_res = pd.concat([df_res_valsg, df_res_qtstock, df_res_valsg_qtstock], axis=1)
             
@@ -230,12 +246,14 @@ if __name__ == '__main__':
     
     scenarioFile = "./data_scenario_JeuDominique/dataFromQuentinAutomate5Periods10instances_TEST.json"
     scenarioFile = "./data_scenario_JeuDominique/dataFromQuentinAutomate50Periods1einstance.json"
+    # scenarioFile = "./data_dbg/dataFromQuentinAutomate10Periods10instances_DBG_TODELETE.json"
+    scenarioFile = "./data_scenario_JeuDominique/dataFromQuentinAutomate50PeriodsNinstances.json"
     
     scenario = None
     with open(scenarioFile) as file:
         scenario = json.load(file)
         
-    bool_runAlgo = True # False
+    bool_runAlgo = False # False, True
         
     N_instance = scenario["simul"]["N_instance"]
     for n_instance in range(N_instance):
