@@ -464,14 +464,14 @@ def plot_cumulative_ValSG(df_rho_mu_epsilon_lambda:pd.DataFrame):
                         .mean().reset_index()\
                     .groupby(["algoName","period"]).sum().reset_index()
                     
-        N_prosumers = len(df_lr_algos.prosumers.unique())
         
         mask_100Lri = ~df_ValSGs.astype(str).apply(lambda row: row.str.startswith("LRI")).any(axis=1)
         df_ValSGs_100lri = df_ValSGs[mask_100Lri]
-        df_ValSGs_100lri["ValSG"] = df_ValSGs_100lri["ValSG"] * N_prosumers
         
         mask_Lri = df_ValSGs.astype(str).apply(lambda row: row.str.startswith("LRI")).any(axis=1)
         df_ValSGs_lri = df_ValSGs[mask_Lri]
+        M_exec_lri = df_lr_algos.M_exec_lri.unique().shape[0]
+        df_ValSGs_lri["ValSG"] = df_ValSGs_lri["ValSG"] / M_exec_lri
         
         df_ValSGs_merge = pd.concat([df_ValSGs_100lri, df_ValSGs_lri])
         
@@ -566,14 +566,15 @@ def plot_sumQTStock(df_rho_mu_epsilon_lambda: pd.DataFrame):
                             .mean().reset_index()\
                         .groupby(["algoName","period"]).sum().reset_index()
                     
-        N_prosumers = len(df_lr_algos.prosumers.unique())
         
         mask_100Lri = ~df_QTStocks.astype(str).apply(lambda row: row.str.startswith("LRI")).any(axis=1)
         df_QTStocks_100lri = df_QTStocks[mask_100Lri]
-        df_QTStocks_100lri["QTStock"] = df_QTStocks_100lri["QTStock"] * N_prosumers
+        df_QTStocks_100lri["QTStock"] = df_QTStocks_100lri["QTStock"]
         
         mask_Lri = df_QTStocks.astype(str).apply(lambda row: row.str.startswith("LRI")).any(axis=1)
         df_QTStocks_lri = df_QTStocks[mask_Lri]
+        M_exec_lri = df_lr_algos.M_exec_lri.unique().shape[0]
+        df_QTStocks_lri["QTStock"] = df_QTStocks_lri["QTStock"] / M_exec_lri
         
         df_QTStocks_merge = pd.concat([df_QTStocks_100lri, df_QTStocks_lri])
         
@@ -638,14 +639,15 @@ def plot_sumStorage(df_rho_mu_epsilon_lambda:pd.DataFrame):
                         .mean().reset_index()\
                     .groupby(["algoName","period"]).sum().reset_index()
         
-        N_prosumers = len(df_lr_algos.prosumers.unique())
-        
         mask_100Lri = ~df_Sis.astype(str).apply(lambda row: row.str.startswith("LRI")).any(axis=1)
         df_Sis_100lri = df_Sis[mask_100Lri]
-        df_Sis_100lri["storage"] = df_Sis_100lri["storage"] * N_prosumers
+        df_Sis_100lri["storage"] = df_Sis_100lri["storage"]
         
         mask_Lri = df_Sis.astype(str).apply(lambda row: row.str.startswith("LRI")).any(axis=1)
         df_Sis_lri = df_Sis[mask_Lri]
+        M_exec_lri = df_lr_algos.M_exec_lri.unique().shape[0]
+        df_Sis_lri["storage"] = df_Sis_lri["storage"] / M_exec_lri
+        
         
         df_Sis_merge = pd.concat([df_Sis_100lri, df_Sis_lri])
         
